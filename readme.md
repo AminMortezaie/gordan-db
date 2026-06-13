@@ -37,10 +37,11 @@ The secondary goal: use this foundation to make meaningful contributions to prod
 ## Roadmap
 
 ### Phase 1 — Storage Engine
-- [ ] **Page Manager** — open/create file, read page by ID, write page by ID (4KB fixed size)
-- [ ] **Buffer Pool** — page cache, dirty page tracking, LRU eviction, flush to disk
-- [ ] **WAL** — append-only write-ahead log, fsync, crash recovery
-- [ ] **B+ Tree** — insert, search, leaf splits, internal splits, delete
+- [ ] **Page Manager** — open/create file, 4KB pages, pread/pwrite
+- [ ] **Slotted pages** — record + slot layout inside a page
+- [ ] **WAL** — append + fsync before page write, crash recovery
+- [ ] **Buffer Pool** — cache, dirty tracking, LRU, flush via WAL
+- [ ] **B+ Tree** — insert, search, leaf/internal splits (delete later)
 
 ### Phase 2 — Public KV API
 - [ ] `Put(key, value []byte) error`
@@ -66,8 +67,8 @@ LSM (used by BadgerDB, RocksDB) wins on write throughput. B+ Tree (used by BoltD
 ### WAL before flush
 Pages are never written to disk before the WAL entry is synced. This is the core durability guarantee: if the process crashes mid-write, the WAL is the recovery paper trail.
 
-### mmap for reads, pwrite for writes
-Read path uses `mmap` for OS-managed page caching. Write path uses explicit `pwrite` syscalls to control exactly when and what hits disk.
+### I/O: pread/pwrite first, mmap later
+Phase 1 uses explicit `pread`/`pwrite` for a simple, testable I/O path. `mmap` for reads is a later optimization (bbolt's model), added once correctness is proven.
 
 ---
 
@@ -104,12 +105,15 @@ go test ./...
 
 Requires Go 1.21+.
 
+For step-by-step build order, page layout, WAL invariants, and tests, see [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md).
+
 ---
 
 ## Structure
 
 ```
 gordan-db/
+├── docs/          # Implementation guide
 ├── page/          # Page Manager — disk I/O layer
 ├── buffer/        # Buffer Pool — cache + eviction
 ├── wal/           # Write-Ahead Log
