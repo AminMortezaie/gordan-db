@@ -92,6 +92,7 @@ gordan-db is being built with these in mind. The freelist and space amplificatio
 2. **Tests alongside implementation.** No "I'll test it later."
 3. **Understand before moving.** Don't proceed to buffer pool until page manager is fully understood.
 4. **One component at a time.** No parallel work on multiple layers.
+5. **AI: guidance only.** Use AI for design questions, concept clarification, debugging direction, and progress review — not for generated implementation code. All implementation is written by hand in the editor.
 
 ---
 
