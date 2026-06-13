@@ -1,1 +1,4 @@
-package page_manager
+package page
+
+type page struct {
+}
